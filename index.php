@@ -7,5 +7,7 @@
 </head>
 <body>
     <h1>test_réussi</h1>
+
+    <a href="p_creation.php">Ajouter un article</a>
 </body>
 </html>

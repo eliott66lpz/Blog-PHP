@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <h2>Connexion</h2>
 
-    <form method="POST" action="">
+    <form method="POST">
         <div>
             <label for="email">Adresse Email :</label>
             <input 
