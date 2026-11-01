@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $hashMdp = password_hash($mdp, PASSWORD_DEFAULT);
             $pseudoBase = explode('@', $email)[0];
-            $isAdmin = ($email === 'admin@localhost.fr') ? 1 : 0;
+            $isAdmin = ($email === 'admin@localhost.fr' && $mdp === 'admin69IUT') ? 1 : 0;
 
             $requete = $connexion->prepare(
                 "INSERT INTO User (email, mdp, pseudo, admin) VALUES (:email, :mdp, :pseudo, :admin)"

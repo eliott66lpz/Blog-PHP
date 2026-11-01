@@ -25,16 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($description)) {
         $requete = $connexion->prepare(
-            "INSERT INTO Commentaire (description, article_id, user_id)
+                "INSERT INTO Commentaire (description, article_id, user_id)
              VALUES (:description, :article_id, :user_id)"
         );
         $requete->execute([
-            'description' => $description,
-            'article_id'  => $article_id,
-            'user_id'     => $user_id
+                'description' => $description,
+                'article_id'  => $article_id,
+                'user_id'     => $user_id
         ]);
 
-        header("Location: commentaire.php?article_id=" . $article_id);
+        header("Location: comm_article.php?article_id=" . $article_id);
         exit();
     } else {
         $erreur = "Le commentaire ne peut pas être vide.";
@@ -42,7 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 
-$req_article = $connexion->prepare("SELECT * FROM Article WHERE id = :id");
+$req_article = $connexion->prepare(
+        "SELECT Article.*, User.pseudo 
+     FROM Article 
+     INNER JOIN User ON Article.user_id = User.id 
+     WHERE Article.id = :id"
+);
 $req_article->execute(['id' => $article_id]);
 $article = $req_article->fetch();
 
@@ -50,7 +55,13 @@ if (!$article) {
     die("Cet article n'existe pas.");
 }
 
-$req_comment = $connexion->prepare("SELECT * FROM Commentaire WHERE article_id = :article_id ORDER BY id DESC");
+$req_comment = $connexion->prepare(
+        "SELECT Commentaire.*, User.pseudo 
+     FROM Commentaire 
+     INNER JOIN User ON Commentaire.user_id = User.id 
+     WHERE Commentaire.article_id = :article_id 
+     ORDER BY Commentaire.id DESC"
+);
 $req_comment->execute(['article_id' => $article_id]);
 $commentaires = $req_comment->fetchAll();
 ?>
@@ -60,47 +71,48 @@ $commentaires = $req_comment->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($article['titre'] ?? 'Article Sans titre') ?> - TP PHP</title>
+    -     <title><?= htmlspecialchars($article['titre'] ?? 'Article Sans titre') ?> TP PHP
+    </title>
 </head>
 <body>
-    <a href="index.php">← Retour à la liste des articles</a>
-    <hr>
+<a href="index.php">← Retour à la liste des articles</a>
+<hr>
 
-    <article>
-        <h1><?= htmlspecialchars($article['titre'] ?? 'Sans titre') ?></h1>
-        <h3>
-                Auteur : <?= htmlspecialchars((string)($article['user_id'] ?? 'Inconnu')) ?> |
-                Catégorie : <?= htmlspecialchars((string)($article['categorie'] ?? 'Général')) ?>
-        </h3>
-        <p><?= nl2br(htmlspecialchars($article['description'] ?? '')) ?></p>
-    </article>
+<article>
+    <h1><?= htmlspecialchars($article['titre'] ?? 'Sans titre') ?></h1>
+    <h3>
+        Auteur : <?= htmlspecialchars((string)($article['user_id'] ?? 'Inconnu')) ?> |
+        Catégorie : <?= htmlspecialchars((string)($article['categorie'] ?? 'Général')) ?>
+    </h3>
+    <p><?= nl2br(htmlspecialchars($article['description'] ?? '')) ?></p>
+</article>
 
-    <hr>
+<hr>
 
-    <h2>Ajouter un commentaire</h2>
+<h2>Ajouter un commentaire</h2>
 
-    <form method="POST">
-        <label>Votre message :</label><br>
-        <textarea name="description" id="description" rows="4" cols="50" required></textarea><br><br>
-        <button type="submit">Publier le commentaire</button>
-    </form>
+<form method="POST">
+    <label>Votre message : <br>
+        <textarea name="description" id="description" rows="4" cols="50" required></textarea></label><br><br>
+    <button type="submit">Publier le commentaire</button>
+</form>
 
-    <hr>
+<hr>
 
-    <h2>Espace Commentaires (<?= count($commentaires) ?>)</h2>
+<h2>Espace Commentaires (<?= count($commentaires) ?>)</h2>
 
-    <?php if (empty($commentaires)): ?>
-        <p>Soyez le premier à commenter cet article !</p>
-    <?php else: ?>
-        <ul>
-            <?php foreach ($commentaires as $com): ?>
-                <li style="margin-bottom: 15px;">
-                    <strong>Utilisateur #<?= htmlspecialchars((string)($com['user_id'] ?? 'Inconnu')) ?> :</strong><br>
-                    <?= htmlspecialchars($com['description'] ?? '') ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
+<?php if (empty($commentaires)): ?>
+    <p>Soyez le premier à commenter cet article !</p>
+<?php else: ?>
+    <ul>
+        <?php foreach ($commentaires as $com): ?>
+            <li style="margin-bottom: 15px;">
+                <strong><?= htmlspecialchars((string)($com['pseudo'] ?? 'Inconnu')) ?> :</strong><br>
+                <?= htmlspecialchars($com['description'] ?? '') ?>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+<?php endif; ?>
 
 </body>
 </html>
