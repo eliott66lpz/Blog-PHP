@@ -1,4 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $msgErreur= null;
 require_once ('utils.php');
 
@@ -77,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php showMsgErreur($msgErreur); ?>
 
-    <form method="POST">
+    <form method="POST" action="login.php">
         <div>
             <label for="email">Adresse Email :</label>
             <input 

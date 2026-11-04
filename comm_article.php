@@ -1,8 +1,22 @@
 <?php
+declare(strict_types=1);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once 'utils.php';
+
+if (empty($_SESSION['user']['id'])) {
+    header('Location: login.php');
+    exit();
+}
+
+$currentUser   = $_SESSION['user'];
+$currentUserId = (int)$currentUser['id'];
+$isAdmin       = (int)($currentUser['admin'] ?? 0) === 1;
 
 $msgErreur = null;
-
-require_once ('utils.php');
 
 try {
     $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -14,12 +28,34 @@ try {
     die('Erreur Générale : ' . $e->getMessage());
 }
 
-$article_id = isset($_GET['article_id']) ? (int)$_GET['article_id'] : 1;
-$erreur = '';
+$article_id = isset($_GET['article_id']) ? (int)$_GET['article_id'] : 0;
+if ($article_id <= 0) {
+    header('Location: index.php');
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $description = $_POST['description'];
-    $user_id = $_SESSION['user_id'];
+// 1. Traitement de la suppression d'un commentaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comm_id'])) {
+    $comm_id_to_delete = (int)$_POST['delete_comm_id'];
+
+    if ($isAdmin) {
+        $stmt_del = $connexion->prepare("DELETE FROM Commentaire WHERE id = :id");
+        $stmt_del->execute(['id' => $comm_id_to_delete]);
+    } else {
+        $stmt_del = $connexion->prepare("DELETE FROM Commentaire WHERE id = :id AND user_id = :user_id");
+        $stmt_del->execute([
+                'id'      => $comm_id_to_delete,
+                'user_id' => $currentUserId
+        ]);
+    }
+
+    header("Location: comm_article.php?article_id=" . $article_id);
+    exit();
+}
+
+// 2. Traitement de l'ajout d'un commentaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_commentaire'])) {
+    $description = trim($_POST['description'] ?? '');
 
     if (!empty($description)) {
         $requete = $connexion->prepare(
@@ -29,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $requete->execute([
                 'description' => $description,
                 'article_id'  => $article_id,
-                'user_id'     => $user_id
+                'user_id'     => $currentUserId
         ]);
 
         header("Location: comm_article.php?article_id=" . $article_id);
@@ -39,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-
+// Récupération de l'article
 $req_article = $connexion->prepare(
         "SELECT Article.*, User.pseudo 
      FROM Article 
@@ -53,6 +89,7 @@ if (!$article) {
     die("Cet article n'existe pas.");
 }
 
+// Récupération des commentaires
 $req_comment = $connexion->prepare(
         "SELECT Commentaire.*, User.pseudo 
      FROM Commentaire 
@@ -64,35 +101,35 @@ $req_comment->execute(['article_id' => $article_id]);
 $commentaires = $req_comment->fetchAll();
 ?>
 
-<?php require_once ('header.php'); ?>
+<?php require_once 'header.php'; ?>
 
-<a href="index.php">← Retour à la liste des articles</a>
-<hr>
+    <a href="index.php">← Retour à la liste des articles</a>
+    <hr>
 
-<article>
-    <h1><?= htmlspecialchars($article['titre'] ?? 'Sans titre') ?></h1>
-    <h3>
-        Auteur : <?= htmlspecialchars((string)($article['pseudo'] ?? 'Inconnu')) ?> |
-        Catégorie : <?= htmlspecialchars((string)($article['categorie'] ?? 'Général')) ?>
-    </h3>
-    <p><?= nl2br(htmlspecialchars($article['description'] ?? '')) ?></p>
-</article>
+    <article>
+        <h1><?= htmlspecialchars($article['titre'] ?? 'Sans titre') ?></h1>
+        <h3>
+            Auteur : <?= htmlspecialchars((string)($article['pseudo'] ?? 'Inconnu')) ?> |
+            Catégorie : <?= htmlspecialchars((string)($article['categorie'] ?? 'Général')) ?>
+        </h3>
+        <p><?= nl2br(htmlspecialchars($article['description'] ?? '')) ?></p>
+    </article>
 
-<hr>
+    <hr>
 
-<h2>Ajouter un commentaire</h2>
+    <h2>Ajouter un commentaire</h2>
 
 <?php showMsgErreur($msgErreur); ?>
 
-<form method="POST">
-    <label>Votre message : <br>
-        <textarea name="description" id="description" rows="4" cols="50" required></textarea></label><br><br>
-    <button type="submit">Publier le commentaire</button>
-</form>
+    <form method="POST" action="comm_article.php?article_id=<?= $article_id ?>">
+        <label for="desc_comm">Votre message :</label><br>
+        <textarea name="description" id="desc_comm" rows="4" cols="50" required></textarea><br><br>
+        <button type="submit" name="ajouter_commentaire">Publier le commentaire</button>
+    </form>
 
-<hr>
+    <hr>
 
-<h2>Espace Commentaires (<?= count($commentaires) ?>)</h2>
+    <h2>Espace Commentaires (<?= count($commentaires) ?>)</h2>
 
 <?php if (empty($commentaires)): ?>
     <p>Soyez le premier à commenter cet article !</p>
@@ -101,10 +138,18 @@ $commentaires = $req_comment->fetchAll();
         <?php foreach ($commentaires as $com): ?>
             <li style="margin-bottom: 15px;">
                 <strong><?= htmlspecialchars((string)($com['pseudo'] ?? 'Inconnu')) ?> :</strong><br>
-                <?= htmlspecialchars($com['description'] ?? '') ?>
+                <?= nl2br(htmlspecialchars($com['description'] ?? '')) ?><br><br>
+
+                <?php if ($isAdmin || $currentUserId === (int)$com['user_id']): ?>
+                    <form method="POST">
+                        <input type="hidden" name="delete_comm_id" value="<?= (int)$com['id'] ?>">
+                        <button type="submit" onclick="return confirm('Supprimer ce commentaire ?')">Supprimer</button>
+                    </form>
+                    <br>
+                <?php endif; ?>
             </li>
         <?php endforeach; ?>
     </ul>
 <?php endif; ?>
 
-<?php require_once ('footer.php'); ?>
+<?php require_once 'footer.php'; ?>

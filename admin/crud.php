@@ -45,8 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier'])) {
 if (isset($_GET['supprimer'])) {
     $id = (int)$_GET['supprimer'];
     if ($id > 0) {
-        $req = $connexion->prepare("DELETE FROM Categorie WHERE id = :id");
-        $req->execute(['id' => $id]);
+        try {
+            $req = $connexion->prepare("DELETE FROM Categorie WHERE id = :id");
+            $req->execute(['id' => $id]);
+        } catch (PDOException $e) {
+            $_SESSION['erreur_crud'] = "Impossible de supprimer : cette catégorie est liée à des articles existants.";
+        }
     }
     header('Location: crud.php');
     exit();
@@ -71,7 +75,7 @@ $categories = $connexion->query("SELECT * FROM Categorie ORDER BY id ASC")->fetc
     <title>CRUD Catégories - Admin</title>
 </head>
 <body>
-<a href="index.php">← Retour à l'accueil</a>
+<a href="../index.php">← Retour à l'accueil</a>
 <hr>
 
 <h1>Administration des Catégories</h1>
@@ -116,7 +120,7 @@ $categories = $connexion->query("SELECT * FROM Categorie ORDER BY id ASC")->fetc
                 <td><?= htmlspecialchars($cat['nom'] ?? '') ?></td>
                 <td>
                     <a href="crud.php?editer=<?= (int)$cat['id'] ?>">Modifier</a> |
-                    <a href="crud.php?supprimer=<?= (int)$cat['id'] ?>" >Supprimer</a>
+                    <a href="crud.php?supprimer=<?= (int)$cat['id'] ?>" onclick="return confirm('Supprimer cette catégorie ?')">Supprimer</a>
                 </td>
             </tr>
         <?php endforeach; ?>

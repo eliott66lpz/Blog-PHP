@@ -1,7 +1,11 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $msgErreur = null;
 require_once ('utils.php');
+
 
 try{
     $connexion = new PDO ('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -15,17 +19,20 @@ try{
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
-    $titre = $_POST['titre'];
-    $description = $_POST['description'];
-    $categorie = $_POST['categorie'];
+    $titre = trim($_POST['titre'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $selectCategories = $_POST['categorie'] ?? [];
     $user_id = $_SESSION['user_id'] ?? $_SESSION['user']['id'] ?? 1;
 
-    if (!empty($titre) && !empty($description) && !empty($categorie)) {
+    if (!empty($titre) && !empty($description) && !empty($selectCategories)) {
+
+        $categorie_liste = implode(', ', array_map('trim', $selectCategories));
+
         $stmt = $connexion->prepare("INSERT INTO Article (titre, description, categorie, user_id) VALUES (:titre, :description, :categorie, :user_id)");
         $stmt->execute([
                 "titre"       => $titre,
                 "description" => $description,
-                "categorie"   => $categorie,
+                "categorie"   => $selectCategories,
                 "user_id"     => $user_id
         ]);
 
@@ -74,15 +81,17 @@ $categories = $req_categories->fetchAll();
     </div>
 
     <div>
-        <label for="categorie">Catégorie : </label>
-        <select id="categorie" name="categorie" required>
-            <option value="">-- Choisir une catégorie --</option>
-            <?php foreach ($categories as $cat): ?>
-                <option value="<?= htmlspecialchars($cat['nom']) ?>">
-                    <?= htmlspecialchars($cat['nom']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label>Catégories :</label><br>
+        <?php foreach ($categories as $cat): ?>
+            <label>
+                <input
+                        type="checkbox"
+                        name="categories[]"
+                        value="<?= htmlspecialchars($cat['nom']) ?>"
+                >
+                <?= htmlspecialchars($cat['nom']) ?>
+            </label><br>
+        <?php endforeach; ?>
     </div>
 
     <br>
