@@ -1,11 +1,7 @@
 <?php
-declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
 
-session_start();
 $_SESSION['user_id'] = 4;
+require_once ('utils.php');
 
 try {
     $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -17,7 +13,7 @@ try {
     die('Erreur Générale : ' . $e->getMessage());
 }
 
-$pseudo_filtre = trim($_POST['pseudo_f'] ?? '');
+$pseudo_filtre = trim($_GET['pseudo_f'] ?? '');
 
 if (empty($pseudo_filtre)) {
     $sql = "SELECT Article.*, User.pseudo 
@@ -38,23 +34,22 @@ if (empty($pseudo_filtre)) {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil - TP PHP</title>
-</head>
-<body>
+
+<?php require_once('header.php'); ?>
+
+
     <h1>Liste des Articles</h1>
+
     <a href="p_creation.php" type="button">Ajouter un article</a><br><br>
+
     <?php if (!empty($_SESSION['user']['admin']) && (int)$_SESSION['user']['admin'] === 1): ?>
         <a href="crud.php" type="button">Accèder au CRUD</a>
     <?php endif; ?><br><br>
-    <form method="POST">
+
+    <form method="GET">
         <div>
             <label>Filtrer par pseudo :
-            <input type="text" name="pseudo_f">
+            <input type="text" name="pseudo_f" value="<?= htmlspecialchars($pseudo_filtre ?? '') ?>" >
             </label>
             <button type="submit">Valider</button>
         </div>
@@ -85,5 +80,4 @@ if (empty($pseudo_filtre)) {
                 <hr>
         <?php endforeach; ?>
     <?php endif; ?>
-</body>
-</html>
+<?php require_once ('footer.php'); ?>

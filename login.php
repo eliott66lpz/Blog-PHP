@@ -1,10 +1,6 @@
 <?php
-declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
-session_start();
+$msgErreur= null;
+require_once ('utils.php');
 
 try {
     $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -16,11 +12,17 @@ try {
     die('Erreur Générale : ' . $e->getMessage());
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
+    $email = trim($_POST['email']);
     $mdp = $_POST['mdp'];
 
-    if (!empty($email) && !empty($mdp)) {
+    if(empty($email) || empty($mdp)){
+        $msgErreur = "Veuillez remplir tout les champs";
+    }
+
+
+    if ($msgErreur === null) {
         $stmt = $connexion->prepare("SELECT * FROM User WHERE email = :email");
         $stmt->execute(['email' => $email]);
         $user = $stmt->fetch();
@@ -37,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: index.php');
                 exit();
             } else {
-                $erreur = "Mot de passe incorrect.";
+                $msgErreur = "Mot de passe incorrect.";
             }
         } else {
             $hashMdp = password_hash($mdp, PASSWORD_DEFAULT);
@@ -67,17 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - TP PHP</title>
-</head>
 
-<body>
+<?php require_once ('header.php'); ?>
+
 
     <h2>Connexion</h2>
+
+    <?php showMsgErreur($msgErreur); ?>
 
     <form method="POST">
         <div>
@@ -89,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 value="<?= htmlspecialchars($email ?? '') ?>" 
                 required
             >
+
         </div>
 
         <br>
@@ -108,5 +107,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" name="valider">Se connecter</button>
     </form>
 
-</body>
-</html>
+<?php require_once ('footer.php'); ?>

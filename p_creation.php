@@ -1,10 +1,7 @@
 <?php
-declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
 
-session_start();
+$msgErreur = null;
+require_once ('utils.php');
 
 try{
     $connexion = new PDO ('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -34,6 +31,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 
         header('Location: index.php');
         exit();
+
+    }else{
+        $msgErreur = "Veuillez remplir tous les champs pour publier l'article";
     }
 }
 
@@ -41,20 +41,16 @@ $req_categories = $connexion->query("SELECT * FROM Categorie ORDER BY nom ASC");
 $categories = $req_categories->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Créer un Article</title>
-</head>
-<body>
+<?php require_once ('header.php'); ?>
+
 <a href="index.php">← Retour à l'accueil</a>
 <hr>
 
 <h1>Page Création Articles</h1>
 
 <h2>Créer un Nouvel Article</h2>
+
+<?php showMsgErreur($msgErreur); ?>
 
 <form method="POST">
     <div>
@@ -92,5 +88,5 @@ $categories = $req_categories->fetchAll();
     <br>
     <button type="submit" name="valider">Valider</button>
 </form>
-</body>
-</html>
+
+<?php require_once('footer.php'); ?>

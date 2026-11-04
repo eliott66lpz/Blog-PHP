@@ -1,10 +1,8 @@
 <?php
-declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
 
-session_start();
+$msgErreur = null;
+
+require_once ('utils.php');
 
 try {
     $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
@@ -37,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: comm_article.php?article_id=" . $article_id);
         exit();
     } else {
-        $erreur = "Le commentaire ne peut pas être vide.";
+        $msgErreur = "Le commentaire ne peut pas être vide.";
     }
 }
 
@@ -66,22 +64,15 @@ $req_comment->execute(['article_id' => $article_id]);
 $commentaires = $req_comment->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    -     <title><?= htmlspecialchars($article['titre'] ?? 'Article Sans titre') ?> TP PHP
-    </title>
-</head>
-<body>
+<?php require_once ('header.php'); ?>
+
 <a href="index.php">← Retour à la liste des articles</a>
 <hr>
 
 <article>
     <h1><?= htmlspecialchars($article['titre'] ?? 'Sans titre') ?></h1>
     <h3>
-        Auteur : <?= htmlspecialchars((string)($article['user_id'] ?? 'Inconnu')) ?> |
+        Auteur : <?= htmlspecialchars((string)($article['pseudo'] ?? 'Inconnu')) ?> |
         Catégorie : <?= htmlspecialchars((string)($article['categorie'] ?? 'Général')) ?>
     </h3>
     <p><?= nl2br(htmlspecialchars($article['description'] ?? '')) ?></p>
@@ -90,6 +81,8 @@ $commentaires = $req_comment->fetchAll();
 <hr>
 
 <h2>Ajouter un commentaire</h2>
+
+<?php showMsgErreur($msgErreur); ?>
 
 <form method="POST">
     <label>Votre message : <br>
@@ -114,5 +107,4 @@ $commentaires = $req_comment->fetchAll();
     </ul>
 <?php endif; ?>
 
-</body>
-</html>
+<?php require_once ('footer.php'); ?>
