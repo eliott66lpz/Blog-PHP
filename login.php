@@ -1,112 +1,124 @@
 <?php
-declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
-session_start();
-
-try {
-    $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
-    $connexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $connexion->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die('Erreur PDO : ' . $e->getMessage());
-} catch (Exception $e) {
-    die('Erreur Générale : ' . $e->getMessage());
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
+$msgErreur = null;
+require_once('filesPHP/utils.php');
+require_once 'database/function_database.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $mdp = $_POST['mdp'];
+    $email = trim($_POST['email'] ?? '');
+    $mdp   = $_POST['mdp'] ?? '';
 
-    if (!empty($email) && !empty($mdp)) {
-        $stmt = $connexion->prepare("SELECT * FROM User WHERE email = :email");
-        $stmt->execute(['email' => $email]);
-        $user = $stmt->fetch();
-        $stmt->closeCursor();
+    if (empty($email) || empty($mdp)) {
+        $msgErreur = "Veuillez remplir tous les champs";
+    }
 
-        if ($user) {
-            if (password_verify($mdp, $user['mdp'])) {
-                $_SESSION['user'] = [
-                    'id'     => (int)$user['id'],
-                    'email'  => $user['email'],
-                    'pseudo' => $user['pseudo'],
-                    'admin'  => (int)$user['admin']
-                ];
-                header('Location: index.php');
-                exit();
-            } else {
-                $erreur = "Mot de passe incorrect.";
-            }
-        } else {
-            $hashMdp = password_hash($mdp, PASSWORD_DEFAULT);
-            $pseudoBase = explode('@', $email)[0];
-            $isAdmin = ($email === 'admin@localhost.fr') ? 1 : 0;
+    if ($msgErreur === null) {
+        $resultat = authentifierUser($email, $mdp);
 
-            $requete = $connexion->prepare(
-                "INSERT INTO User (email, mdp, pseudo, admin) VALUES (:email, :mdp, :pseudo, :admin)"
-            );
-            $requete->execute([
-                'email'  => $email,
-                'mdp'    => $hashMdp,
-                'pseudo' => $pseudoBase,
-                'admin'  => $isAdmin
-            ]);
-
-            $_SESSION['user'] = [
-                'id'     => (int)$connexion->lastInsertId(),
-                'email'  => $email,
-                'pseudo' => $pseudoBase,
-                'admin'  => $isAdmin
-            ];
-
-            header('Location: index.php');
-            exit();
+        if (is_string($resultat)) {
+            $msgErreur = $resultat;
+        } elseif ($resultat === false) {
+            creerUser($email, $mdp);
         }
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - TP PHP</title>
-</head>
 
-<body>
+<?php require_once('filesPHP/header.php'); ?>
 
-    <h2>Connexion</h2>
+    <style>
+        /* Zone centrée verticalement et horizontalement */
+        .login-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px
+            width: 100%;
+        }
 
-    <form method="POST">
-        <div>
-            <label for="email">Adresse Email :</label>
-            <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                value="<?= htmlspecialchars($email ?? '') ?>" 
-                required
-            >
-        </div>
+        .login-wrapper h2 {
+            text-align: center;
+            margin: 0 0 20px 0;
+            font-size: 28px;
+        }
 
-        <br>
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 320px;
+        }
 
-        <div>
-            <label for="mdp">Mot de passe :</label>
-            <input 
-                type="password" 
-                id="mdp" 
-                name="mdp" 
-                required
-            >
-        </div>
+        .champ-ligne {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 5px;
+        }
 
-        <br>
+        .champ-ligne label {
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-        <button type="submit" name="valider">Se connecter</button>
-    </form>
+        .champ-ligne input {
+            border: none;
+            border-radius: 8px;
+            height: 36px;
+            padding: 0 12px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
 
-</body>
-</html>
+        .login-form button {
+            width: 100%;
+            height: 38px;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 3px 3px gray;
+            background-color: white;
+            color: black;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .login-form button:hover {
+            background-color: rgb(48, 48, 48);
+            color: white;
+            box-shadow: none;
+            margin-left: 2px;
+            margin-top: 12px;
+        }
+    </style>
+
+    <div class="login-wrapper">
+        <h2>Connexion</h2>
+
+        <!-- L'erreur est maintenant affichée proprement au centre -->
+        <?php showMsgErreur($msgErreur); ?>
+
+        <form method="POST" action="login.php" class="login-form">
+            <div class="champ-ligne">
+                <label for="email">Adresse Email :</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="champ-ligne">
+                <label for="mdp">Mot de passe :</label>
+                <input type="password" id="mdp" name="mdp" required>
+            </div>
+
+            <button type="submit">Se connecter</button>
+        </form>
+    </div>
+
+<?php require_once('filesPHP/footer.php'); ?>
