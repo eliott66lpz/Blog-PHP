@@ -194,6 +194,16 @@ function creerUser(string $email, string $mdp): void
         return $requete->fetchAll();
     }
 
+    function recupCategorieParId(int $id): ?array
+    {
+        $connexion = Connexion();
+        $req = $connexion->prepare("SELECT * FROM Categorie WHERE id = :id");
+        $req->execute(['id' => $id]);
+        $resultat = $req->fetch();
+
+        return $resultat ?: null;
+    }
+
     function ajouterArticle(string $titre, string $description, array $categories, int $userId): void {
         $connexion = Connexion();
 
@@ -212,6 +222,41 @@ function creerUser(string $email, string $mdp): void
 
         header('Location: index.php');
         exit();
+    }
+
+    function ajouterCategorie(string $nom): bool
+    {
+        $nom = trim($nom);
+        if ($nom === '') {
+            return false;
+        }
+
+        $connexion = Connexion();
+        $req = $connexion->prepare("INSERT INTO Categorie (nom) VALUES (:nom)");
+        return $req->execute(['nom' => $nom]);
+    }
+
+    function modifierCategorie(int $id, string $nom): bool
+    {
+        $nom = trim($nom);
+        if ($id <= 0 || $nom === '') {
+            return false;
+        }
+
+        $connexion = Connexion();
+        $req = $connexion->prepare("UPDATE Categorie SET nom = :nom WHERE id = :id");
+        return $req->execute(['nom' => $nom, 'id' => $id]);
+    }
+
+    function supprimerCategorie(int $id): bool
+    {
+        if ($id <= 0) {
+            return false;
+        }
+
+        $connexion = Connexion();
+        $req = $connexion->prepare("DELETE FROM Categorie WHERE id = :id");
+        return $req->execute(['id' => $id]);
     }
 
 ?>

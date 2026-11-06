@@ -34,7 +34,6 @@ $categories = recupCategories();
 <?php require_once 'header.php'; ?>
 
     <style>
-        /* Titres */
         h1 {
             margin-top: 30px;
             margin-bottom: 20px;
@@ -45,7 +44,6 @@ $categories = recupCategories();
             margin: 0 0 20px 0;
         }
 
-        /* Lien retour à l'accueil */
         a[href="index.php"] {
             text-decoration: none;
             font-style: italic;
@@ -59,14 +57,12 @@ $categories = recupCategories();
             text-decoration: underline;
         }
 
-        /* Ligne de séparation */
         hr {
             border: none;
             border-top: 1px solid #c4c0c0;
             margin: 15px 0 25px 0;
         }
 
-        /* Structure du formulaire */
         form {
             margin: 0 auto;
             display: flex;
@@ -87,7 +83,6 @@ $categories = recupCategories();
             color: #222;
         }
 
-        /* Champs de saisie */
         input[type="text"],
         textarea,
         select {
@@ -109,7 +104,6 @@ $categories = recupCategories();
             resize: vertical;
         }
 
-        /* Checkboxes des catégories */
         form div label {
             display: inline-flex;
             align-items: center;
@@ -118,7 +112,6 @@ $categories = recupCategories();
             cursor: pointer;
         }
 
-        /* Bouton de soumission */
         button {
             align-self: center;
             width: 200px;
