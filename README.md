@@ -50,4 +50,3 @@ Le code source est organisé selon l'arborescence suivante :
 ├── 📁 README/
 │   └── README.md                  # Documentation du projet
 └── login.php                      # Page d'authentification (Racine du projet)
-└── login.php                      # Page d'authentification (Racine du projet)
