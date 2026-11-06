@@ -67,14 +67,125 @@ if (isset($_GET['editer'])) {
 $categories = $connexion->query("SELECT * FROM Categorie ORDER BY id ASC")->fetchAll();
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Catégories - Admin</title>
-</head>
-<body>
+<style>
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        text-align: center;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+
+    .retour-accueil {
+        display: inline-block;
+        margin-bottom: 15px;
+        color: #000;
+        text-decoration: none;
+        font-style: italic;
+    }
+
+    .retour-accueil:hover {
+        text-decoration: underline;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    form label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-weight: bold;
+        gap: 5px;
+    }
+
+    form input[type="text"] {
+        border: none;
+        border-radius: 5px;
+        height: 25px;
+        padding: 2px 8px;
+        width: 250px;
+    }
+
+    button,
+    .btn-action {
+        width: 200px;
+        border: none;
+        border-radius: 20px;
+        box-shadow: 3px 3px gray;
+        padding: 6px 15px;
+        background-color: white;
+        color: black;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        box-sizing: border-box;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+    }
+
+    button:hover,
+    .btn-action:hover {
+        background-color: rgb(48, 48, 48);
+        margin-left: 2px;
+        margin-top: 2px;
+        box-shadow: none;
+        color: white;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        margin-top: 15px;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: rgb(48, 48, 48);
+        color: white;
+    }
+
+    .action-link {
+        color: #000;
+        text-decoration: none;
+        font-weight: bold;
+        margin: 0 5px;
+    }
+
+    .action-link:hover {
+        text-decoration: underline;
+    }
+
+    .erreur-crud {
+        background-color: #ffcccc;
+        color: #990000;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+</style>
+
+<?php require_once ('../filesPHP/header.php'); ?>
+
 <a href="../filesPHP/index.php">← Retour à l'accueil</a>
 <hr>
 
@@ -127,5 +238,5 @@ $categories = $connexion->query("SELECT * FROM Categorie ORDER BY id ASC")->fetc
         </tbody>
     </table>
 <?php endif; ?>
-</body>
-</html>
+
+<?php require_once ('../filesPHP/footer.php'); ?>
