@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once 'utils.php';
+require_once '../database/function_database.php';
 
 if (empty($_SESSION['user']['id'])) {
     header('Location: login.php');
@@ -18,15 +19,6 @@ $isAdmin       = (int)($currentUser['admin'] ?? 0) === 1;
 
 $msgErreur = null;
 
-try {
-    $connexion = new PDO('mysql:host=localhost;dbname=blog_php;charset=utf8', 'root', '');
-    $connexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $connexion->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die('Erreur PDO : ' . $e->getMessage());
-} catch (Exception $e) {
-    die('Erreur Générale : ' . $e->getMessage());
-}
 
 $article_id = isset($_GET['article_id']) ? (int)$_GET['article_id'] : 0;
 if ($article_id <= 0) {
@@ -34,71 +26,29 @@ if ($article_id <= 0) {
     exit();
 }
 
-// 1. Traitement de la suppression d'un commentaire
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comm_id'])) {
     $comm_id_to_delete = (int)$_POST['delete_comm_id'];
-
-    if ($isAdmin) {
-        $stmt_del = $connexion->prepare("DELETE FROM Commentaire WHERE id = :id");
-        $stmt_del->execute(['id' => $comm_id_to_delete]);
-    } else {
-        $stmt_del = $connexion->prepare("DELETE FROM Commentaire WHERE id = :id AND user_id = :user_id");
-        $stmt_del->execute([
-                'id'      => $comm_id_to_delete,
-                'user_id' => $currentUserId
-        ]);
-    }
-
-    header("Location: comm_article.php?article_id=" . $article_id);
-    exit();
+    suppComm($comm_id_to_delete, $currentUserId, $isAdmin, $article_id);
 }
 
-// 2. Traitement de l'ajout d'un commentaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajouter_commentaire'])) {
     $description = trim($_POST['description'] ?? '');
 
     if (!empty($description)) {
-        $requete = $connexion->prepare(
-                "INSERT INTO Commentaire (description, article_id, user_id)
-             VALUES (:description, :article_id, :user_id)"
-        );
-        $requete->execute([
-                'description' => $description,
-                'article_id'  => $article_id,
-                'user_id'     => $currentUserId
-        ]);
-
-        header("Location: comm_article.php?article_id=" . $article_id);
-        exit();
+        ajoutComm($description, $article_id, $currentUserId);
     } else {
         $msgErreur = "Le commentaire ne peut pas être vide.";
     }
 }
 
-// Récupération de l'article
-$req_article = $connexion->prepare(
-        "SELECT Article.*, User.pseudo 
-     FROM Article 
-     INNER JOIN User ON Article.user_id = User.id 
-     WHERE Article.id = :id"
-);
-$req_article->execute(['id' => $article_id]);
-$article = $req_article->fetch();
+$article = recupArticle($article_id);
+    if (!$article) {
+        die("Cet article n'existe pas.");
+    }
 
-if (!$article) {
-    die("Cet article n'existe pas.");
-}
+    $commentaires = recupCommentaires($article_id);
 
-// Récupération des commentaires
-$req_comment = $connexion->prepare(
-        "SELECT Commentaire.*, User.pseudo 
-     FROM Commentaire 
-     INNER JOIN User ON Commentaire.user_id = User.id 
-     WHERE Commentaire.article_id = :article_id 
-     ORDER BY Commentaire.id DESC"
-);
-$req_comment->execute(['article_id' => $article_id]);
-$commentaires = $req_comment->fetchAll();
 ?>
 
 <?php require_once 'header.php'; ?>

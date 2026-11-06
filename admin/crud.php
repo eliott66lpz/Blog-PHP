@@ -75,7 +75,7 @@ $categories = $connexion->query("SELECT * FROM Categorie ORDER BY id ASC")->fetc
     <title>CRUD Catégories - Admin</title>
 </head>
 <body>
-<a href="../index.php">← Retour à l'accueil</a>
+<a href="../filesPHP/index.php">← Retour à l'accueil</a>
 <hr>
 
 <h1>Administration des Catégories</h1>
