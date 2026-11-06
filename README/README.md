@@ -28,7 +28,7 @@ Le projet propose un système complet de gestion de contenu avec deux niveaux de
 
 ## 📂 Architecture du Projet
 
-Le code source a été refactorisé pour séparer logiquement les différentes couches de l'application :
+Le code source est organisé selon l'arborescence suivante :
 
 ```text
 📁 tp_php/
@@ -40,10 +40,13 @@ Le code source a été refactorisé pour séparer logiquement les différentes c
 │   ├── blog_php.sql               # Script de création de la base de données
 │   └── function_database.php      # Fichier centralisant toutes les requêtes PDO
 ├── 📁 filesPHP/
+│   ├── ajout_commentaire.php      # Traitement de l'ajout des commentaires
 │   ├── comm_article.php           # Page d'affichage d'un article et ses commentaires
-│   ├── header.php / footer.php    # Éléments d'interface réutilisables
+│   ├── footer.php                 # Pied de page global
+│   ├── header.php                 # En-tête global et navigation
 │   ├── index.php                  # Page d'accueil (liste des articles et filtres)
-│   ├── login.php                  # Page d'authentification
 │   ├── p_creation.php             # Formulaire de création d'un article
 │   └── utils.php                  # Fonctions utilitaires (affichage d'erreurs, etc.)
-└── README.md                      # Documentation du projet
+├── 📁 README/
+│   └── README.md                  # Documentation du projet
+└── login.php                      # Page d'authentification (Racine du projet)
